@@ -1,0 +1,43 @@
+@use '~layout' as layout;
+
+.page-main.mods {
+
+    &.landing {
+        @include layout.fullsize;
+    }
+
+    .nav {
+        @include layout.flex-start(true);
+
+        padding: 2px 10px;
+
+        >span {
+            margin-right: 10px;
+        }
+
+        >a {
+            &:not(:first-child) {
+                margin-left: 10px;
+            }
+
+            &.active {
+                .btn {
+                    text-decoration: underline;
+                }
+            }
+        }
+    }
+
+    .mod-creation-form {
+        @include layout.flex-center(true, true);
+        @include layout.fullsize;
+
+        .fields {
+            padding: 5px;
+
+            .input {
+                text-align: center;
+            }
+        }
+    }
+}

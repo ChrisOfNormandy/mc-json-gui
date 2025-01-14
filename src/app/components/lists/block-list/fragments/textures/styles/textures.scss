@@ -1,0 +1,23 @@
+@use '~layout' as layout;
+
+.textures {
+    @include layout.flex(false, true);
+
+    overflow: hidden;
+
+    .new-texture-form {
+        @include layout.flex;
+
+        padding: 10px;
+
+        .form-fields {
+            @include layout.flex(false, true);
+
+            margin-right: 10px;
+        }
+    }
+
+    .textures-list {
+        overflow: auto;
+    }
+}

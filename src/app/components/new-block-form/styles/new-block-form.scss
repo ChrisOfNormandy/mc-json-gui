@@ -1,0 +1,17 @@
+@use '~layout' as layout;
+
+.new-block-form {
+    @include layout.flex(true, true);
+
+    .form-fields {
+        @include layout.flex(true);
+
+        padding: 5px;
+
+        .block-choices {
+            @include layout.flex(false, true);
+
+            margin: 0 10px;
+        }
+    }
+}

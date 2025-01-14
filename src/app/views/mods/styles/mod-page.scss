@@ -1,0 +1,40 @@
+@use '~layout' as layout;
+
+.mod-page {
+    @include layout.flex(false, true);
+    @include layout.fullsize;
+
+    .database {
+        @include layout.flex-between(true);
+
+        padding: 10px;
+
+        .db-section {
+            @include layout.flex(true);
+        }
+    }
+
+    .forms {
+        @include layout.flex-between(true);
+
+        overflow: hidden;
+        padding: 10px;
+    }
+
+    .lists {
+        @include layout.flex-between;
+        @include layout.fullsize;
+
+        overflow: hidden;
+
+        .heading {
+            @include layout.flex-center(true);
+        }
+    }
+
+    .downloaders {
+        @include layout.flex-between(true);
+
+        padding: 10px;
+    }
+}

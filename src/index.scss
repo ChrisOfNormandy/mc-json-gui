@@ -1,0 +1,12 @@
+@use '~layout' as layout;
+@use '~styling' as styling;
+@use '~themes' as themes;
+@use '@chrisofnormandy/confects/style.css';
+@use '@chrisofnormandy/confetti/main.scss';
+
+@include themes.themeify('navy');
+
+a {
+    color: inherit;
+    text-decoration: none;
+}

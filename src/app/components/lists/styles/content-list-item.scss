@@ -1,0 +1,40 @@
+@use '~layout' as layout;
+@use '~styling' as styling;
+
+.content-list-item {
+    @include layout.flex(true);
+    @include styling.rounded;
+
+    padding: 5px 10px;
+    border: 1px solid;
+
+    &:not(:first-child) {
+        margin-top: 5px;
+    }
+
+    .content-name {
+        @include layout.flex(true, true);
+
+        .content-type {
+            font-size: 12px;
+        }
+    }
+
+    .content-downloads {
+        @include layout.flex(false, true);
+
+        margin: 0 10px;
+
+        .btn {
+            @include layout.flex-between(true);
+            @include layout.wide;
+        }
+    }
+
+    .content-controls {
+        .btn {
+            @include layout.flex-between(true);
+            @include layout.wide;
+        }
+    }
+}

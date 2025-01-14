@@ -1,0 +1,14 @@
+@use '~layout' as layout;
+
+.content-list-wrapper {
+    @include layout.flex(false, true);
+    @include layout.wide;
+
+    overflow: hidden;
+
+    .content-list-ul {
+        @include layout.flex(false, true);
+
+        overflow: auto;
+    }
+}

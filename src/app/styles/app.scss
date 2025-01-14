@@ -1,0 +1,41 @@
+@use '~layout' as layout;
+
+body,
+#root {
+    @include layout.flex(true, true);
+    @include layout.fullsize;
+    overflow: hidden;
+}
+
+.page {
+    padding: 0 20px;
+
+    .page-header {
+        @include layout.flex-even(true, true);
+
+        .nav {
+            @include layout.flex-between(true);
+
+            >* {
+                &:not(:first-child) {
+                    margin-left: 10px;
+                }
+            }
+        }
+    }
+
+    .page-body {
+        .page-main {
+            @include layout.flex(false, true);
+            @include layout.fullsize;
+
+            overflow: hidden;
+        }
+    }
+
+    .page-footer {
+        @include layout.flex(false, true);
+        overflow: hidden;
+        padding: 5px;
+    }
+}
