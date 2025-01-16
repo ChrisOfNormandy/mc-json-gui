@@ -1,17 +1,23 @@
 import './styles/item-list.scss';
-import { IItem } from '../../../content/items/IItem';
 import { useEffect, useState } from 'react';
 import ContentList from '../ContentList';
+import ItemBase from '../../../content/items/ItemBase';
 import ItemListItem from './ItemListItem';
 import ModCacher from '../../../content/ModCacher';
 import ModDef from '../../../content/ModDef';
+
+interface ItemListProps {
+    mod: ModDef
+    downloadFiles: (files: File[]) => Promise<void>
+    itemList: ItemBase<ModCacher>[]
+}
 
 export default function ItemList(
     {
         mod,
         itemList,
         downloadFiles
-    }: { mod: ModDef, downloadFiles: (files: File[]) => Promise<void>, itemList: IItem<ModCacher>[] }
+    }: ItemListProps
 ) {
     const [ready, isReady] = useState(true);
 
@@ -30,11 +36,11 @@ export default function ItemList(
     >
         {
             ready &&
-            itemList.map((itemDef) => {
+            itemList.map((item) => {
                 return <ItemListItem
-                    key={itemDef.id}
+                    key={item.id}
                     mod={mod}
-                    itemDef={itemDef}
+                    item={item}
                     downloadFiles={downloadFiles}
                 />;
             })

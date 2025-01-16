@@ -1,11 +1,6 @@
 @use '~layout' as layout;
 
 .page-main.mods {
-
-    &.landing {
-        @include layout.fullsize;
-    }
-
     .nav {
         @include layout.flex-start(true);
 
@@ -28,16 +23,16 @@
         }
     }
 
-    .mod-creation-form {
+    .mods-panel {
         @include layout.flex-center(true, true);
         @include layout.fullsize;
 
-        .fields {
-            padding: 5px;
+        .heading {
+            margin-bottom: 10px;
+        }
 
-            .input {
-                text-align: center;
-            }
+        .panel {
+            @include layout.flex-center(true);
         }
     }
 }

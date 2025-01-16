@@ -2,29 +2,30 @@ import './styles/mod-page.scss';
 import { Button } from '@chrisofnormandy/confects/buttons';
 import { CachedData } from '../../content/types';
 import { downloadFile, getClassName } from '@chrisofnormandy/confects/helpers';
-import { IBlock } from '../../content/blocks/IBlock';
-import { Icon } from '@chrisofnormandy/confects/decorations';
-import { IItem } from '../../content/items/IItem';
-import { Input } from '@chrisofnormandy/confects/inputs';
 import { themes } from '@chrisofnormandy/confetti/themes';
+import { useAppData } from '../../components/app-data/AppDataProvider';
 import { useNavigate, useParams } from 'react-router';
 import { useState, useActionState, useEffect } from 'react';
 import BlockList from '../../components/lists/block-list/BlockList';
+import Exporter from './fragments/exporter/Exporter';
 import ItemList from '../../components/lists/item-list/ItemList';
 import JSZip from 'jszip';
 import ModCacher from '../../content/ModCacher';
 import ModDef from '../../content/ModDef';
 import NewBlockForm from '../../components/new-block-form/NewBlockForm';
 import NewItemForm from '../../components/new-item-form/NewItemForm';
+import ItemBase from '../../content/items/ItemBase';
+import BlockBase from '../../content/blocks/BlockBase';
 
 export default function ModPage() {
 
     const { namespace } = useParams();
+    const appDataCtx = useAppData();
     const navigate = useNavigate();
 
     const [mod, setMod] = useState<ModDef>();
-    const [blockList, setBlockList] = useState<IBlock<ModCacher>[]>([]);
-    const [itemList, setItemList] = useState<IItem<ModCacher>[]>([]);
+    const [blockList, setBlockList] = useState<BlockBase<ModCacher, ItemBase<ModCacher>>[]>([]);
+    const [itemList, setItemList] = useState<ItemBase<ModCacher>[]>([]);
 
     const downloadFiles = async (files: File[]) => {
         if (!mod) return;
@@ -63,7 +64,7 @@ export default function ModPage() {
 
     useEffect(() => {
         if (!namespace || mod && mod.getName() === namespace)
-            return;
+            return () => undefined;
 
         console.debug('Using namespace:', namespace);
 
@@ -71,8 +72,8 @@ export default function ModPage() {
 
         return () => {
             if (mod)
-                mod.destroy();
-        }
+                mod.delete(appDataCtx);
+        };
     }, [namespace]);
 
     const [getContentError, getContentSubmitAction, getContentPending] = useActionState<Error | null, FormData>(
@@ -97,39 +98,13 @@ export default function ModPage() {
     );
 
     const [deleteError, deleteSubmitAction, deletePending] = useActionState<Error | null, FormData>(
-        async () => {
+        () => {
             if (!mod)
                 return new Error('No mod selected');
 
-            await mod.delete();
+            mod.delete(appDataCtx);
 
             navigate('/mods');
-
-            return null;
-        },
-        null
-    );
-
-    const [importError, importSubmitAction, importPending] = useActionState<Error | null, FormData>(
-        async (_previousState, formData) => {
-            if (!mod)
-                return new Error('No mod selected');
-
-            const file = formData.get('import_file') as File;
-
-            try {
-                const importMod = new ModDef('_temp', () => { console.debug(''); });
-
-                await importMod.importDatabase(file);
-
-                navigate(`/mods/${importMod.getName()}`);
-            }
-            catch (err) {
-                console.error(err);
-
-                if (err instanceof Error)
-                    return err;
-            }
 
             return null;
         },
@@ -143,56 +118,12 @@ export default function ModPage() {
         id={`mod_page:${namespace}`}
         className='mod-page'
     >
+        <title>
+            {`MC JSON GUI | ${mod.getName()}`}
+        </title>
+
         {getContentError && getContentError.message}
-        {importError && importError.message}
         {deleteError && deleteError.message}
-
-        <div
-            className={getClassName('database', themes.getStyles({ background: { style: 'secondary' } }))}
-        >
-            <form
-                id='import_form'
-                className='db-section import'
-                action={importSubmitAction}
-            >
-                <Input
-                    type='file'
-                    name='import_file'
-                    required
-                />
-
-                <Button
-                    submit='import_form'
-                    disabled={importPending}
-                    theme={{ background: { style: 'success' }, border: { style: 'success' } }}
-                >
-                    <Icon
-                        icon='box-arrow-in-right'
-                    />
-
-                    <span>
-                        Import Database
-                    </span>
-                </Button>
-            </form>
-
-            <div
-                className='db-section export'
-            >
-                <Button
-                    onClick={() => mod.exportDatabase()}
-                    theme={{ background: { style: 'success' }, border: { style: 'success' } }}
-                >
-                    <Icon
-                        icon='box-arrow-right'
-                    />
-
-                    <span>
-                        Export Database
-                    </span>
-                </Button>
-            </div>
-        </div>
 
         <div
             className={getClassName('forms', themes.getStyles({ background: { style: 'content' } }))}
@@ -232,11 +163,18 @@ export default function ModPage() {
                 <Button
                     disabled={getContentPending}
                     submit='get_content_form'
-                    theme={{ background: { style: 'success' }, border: { style: 'success' } }}
+                    theme={{
+                        background: { style: 'success' },
+                        border: { style: 'success' }
+                    }}
                 >
-                    Get Content
+                    Download Resources
                 </Button>
             </form>
+
+            <Exporter
+                mod={mod}
+            />
 
             <form
                 action={deleteSubmitAction}
@@ -245,7 +183,10 @@ export default function ModPage() {
                 <Button
                     submit='delete_form'
                     disabled={deletePending}
-                    theme={{ background: { style: 'hazard' }, border: { style: 'hazard' } }}
+                    theme={{
+                        background: { style: 'hazard' },
+                        border: { style: 'hazard' }
+                    }}
                 >
                     Delete
                 </Button>

@@ -1,20 +1,22 @@
 import './styles/block-list-item.scss';
+import { BlockType } from '../../../content/types';
 import { Button } from '@chrisofnormandy/confects/buttons';
-import { BlockType, IBlock } from '../../../content/blocks/IBlock';
 import { Icon } from '@chrisofnormandy/confects/decorations';
 import { Input } from '@chrisofnormandy/confects/inputs';
 import { useActionState } from 'react';
 import ContentListItem from '../ContentListItem';
 import ModCacher from '../../../content/ModCacher';
 import ModDef from '../../../content/ModDef';
-import Textures from './fragments/textures/Textures';
+import Textures from '../../textures/Textures';
+import BlockBase from '../../../content/blocks/BlockBase';
+import ItemBase from '../../../content/items/ItemBase';
 
 export default function BlockListItem(
     {
         mod,
         blockDef,
         downloadFiles
-    }: { mod: ModDef, blockDef: IBlock<ModCacher>, downloadFiles: (files: File[]) => Promise<void> }
+    }: { mod: ModDef, blockDef: BlockBase<ModCacher, ItemBase<ModCacher>>, downloadFiles: (files: File[]) => Promise<void> }
 ) {
 
     const [renameError, renameSubmitAction, renamePending] = useActionState<Error | null, FormData>(
@@ -99,7 +101,7 @@ export default function BlockListItem(
                 disabled={lockFormSubmits}
                 onClick={
                     async () => {
-                        const files = blockDef.blockState();
+                        const files = blockDef.blockState.file();
                         await downloadFiles(files);
                     }
                 }
@@ -117,7 +119,7 @@ export default function BlockListItem(
                 disabled={lockFormSubmits}
                 onClick={
                     async () => {
-                        const files = blockDef.model();
+                        const files = blockDef.model.file();
                         await downloadFiles(files);
                     }
                 }
@@ -127,7 +129,7 @@ export default function BlockListItem(
                 />
 
                 <span>
-                    Models
+                    Block Models
                 </span>
             </Button>
 
@@ -135,7 +137,25 @@ export default function BlockListItem(
                 disabled={lockFormSubmits}
                 onClick={
                     async () => {
-                        const files = blockDef.recipe();
+                        const files = blockDef.item.model.file();
+                        await downloadFiles(files);
+                    }
+                }
+            >
+                <Icon
+                    icon='download'
+                />
+
+                <span>
+                    Item Models
+                </span>
+            </Button>
+
+            <Button
+                disabled={lockFormSubmits}
+                onClick={
+                    async () => {
+                        const files = blockDef.recipe.file();
                         await downloadFiles(files);
                     }
                 }
@@ -153,7 +173,7 @@ export default function BlockListItem(
                 disabled={lockFormSubmits}
                 onClick={
                     async () => {
-                        const files = blockDef.lootTable();
+                        const files = blockDef.lootTable.file();
                         await downloadFiles(files);
                     }
                 }
@@ -187,8 +207,7 @@ export default function BlockListItem(
                             mod.loadBlockFromSchema({
                                 id: '',
                                 name: blockDef.name,
-                                type,
-                                textures: ''
+                                type
                             });
                         });
                         mod.update();
@@ -214,8 +233,7 @@ export default function BlockListItem(
                             mod.loadBlockFromSchema({
                                 id: '',
                                 name: blockDef.name,
-                                type,
-                                textures: ''
+                                type
                             });
                         });
                         mod.update();

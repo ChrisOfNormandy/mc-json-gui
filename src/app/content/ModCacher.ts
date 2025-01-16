@@ -1,16 +1,20 @@
-import { BlocksTableSchema, CachedData, ItemsTableSchema } from './types';
-import { BlockType, IBlock } from './blocks/IBlock';
-import { IItem, ItemType } from './items/IItem';
+import { AppDataContext } from '../components/app-data/AppDataProvider';
+import { BlocksTableSchema, BlockType, CachedData, ItemsTableSchema, ItemType, TexturesTableSchema } from './types';
+import { downloadFile } from '@chrisofnormandy/confects/helpers';
+import { getResourcesNamespaces, processAssetsResources } from './helpers';
 import ActivatorRailDef from './blocks/ActivatorRailDef';
 import AnvilDef from './blocks/AnvilDef';
 import BarrelDef from './blocks/BarrelDef';
+import BlockBase from './blocks/BlockBase';
 import BlockDef from './blocks/BlockDef';
 import ButtonDef from './blocks/ButtonDef';
 import ClusterDef from './blocks/ClusterDef';
 import DoorDef from './blocks/DoorDef';
 import FenceDef from './blocks/FenceDef';
 import FenceGateDef from './blocks/FenceGateDef';
+import ItemBase from './items/ItemBase';
 import ItemDef from './items/ItemDef';
+import JSZip from 'jszip';
 import Paths from './Paths';
 import PillarBlockDef from './blocks/PillarBlockDef';
 import PressurePlateDef from './blocks/PressurePlateDef';
@@ -21,17 +25,18 @@ import StairsDef from './blocks/StairsDef';
 import StemDef from './blocks/StemDef';
 import TrapdoorDef from './blocks/TrapdoorDef';
 import WallDef from './blocks/WallDef';
-import JSZip from 'jszip';
-import { downloadFile } from '@chrisofnormandy/confects/helpers';
+import { base64ToFile } from '../helpers/images';
 
 export default class ModCacher {
     private name: string;
 
     private updater: (data: CachedData) => void;
 
-    readonly blockCache = new Map<string, IBlock<ModCacher>>();
+    readonly textureCache = new Map<string, string>();
 
-    readonly itemCache = new Map<string, IItem<ModCacher>>();
+    readonly blockCache = new Map<string, BlockBase<ModCacher, ItemBase<ModCacher>>>();
+
+    readonly itemCache = new Map<string, ItemBase<ModCacher>>();
 
     private db: IDBDatabase | null = null;
 
@@ -42,13 +47,18 @@ export default class ModCacher {
     }
 
     private async initDb() {
+        const dbName = `ns_${this.name}`;
+
+        console.debug('Initializing database for', this.name);
+
         this.db = await new Promise<IDBDatabase>((resolve, reject) => {
-            const request = indexedDB.open(`ns_${this.name}`, 1);
+            const request = indexedDB.open(dbName, 1);
 
             request.onupgradeneeded = (event) => {
                 const db = (event.target as IDBOpenDBRequest).result;
                 db.createObjectStore('blocks', { keyPath: 'id' });
                 db.createObjectStore('items', { keyPath: 'id' });
+                db.createObjectStore('textures', { keyPath: 'name' });
             };
 
             request.onsuccess = (event) => {
@@ -61,41 +71,33 @@ export default class ModCacher {
         });
     }
 
-    loadItemFromSchema({ id, name, type, textures }: ItemsTableSchema) {
-        const useTextures = textures
-            ? JSON.parse(textures) as [string, string][]
-            : [];
-
+    loadItemFromSchema({ id, name, type }: ItemsTableSchema) {
         switch (type) {
-            case 'item': return this.addItem(new ItemDef(this, name, id).addTextures(useTextures), false);
+            case 'item': return this.addItem(new ItemDef(this, name, id), false);
             default: return console.warn(`Unknown item type: ${type}`, false);
         }
     }
 
-    loadBlockFromSchema({ id, name, type, textures }: BlocksTableSchema) {
-        const useTextures = textures
-            ? JSON.parse(textures) as [string, string][]
-            : [];
-
+    loadBlockFromSchema({ id, name, type }: BlocksTableSchema) {
         switch (type) {
-            case 'activator_rail': return this.addBlock(new ActivatorRailDef(this, name, id).addTextures(useTextures), false);
-            case 'anvil': return this.addBlock(new AnvilDef(this, name, id).addTextures(useTextures), false);
-            case 'barrel': return this.addBlock(new BarrelDef(this, name, id).addTextures(useTextures), false);
-            case 'button': return this.addBlock(new ButtonDef(this, name, id).addTextures(useTextures), false);
-            case 'cluster': return this.addBlock(new ClusterDef(this, name, id).addTextures(useTextures), false);
-            case 'cube': return this.addBlock(new BlockDef(this, name, id).addTextures(useTextures), false);
-            case 'door': return this.addBlock(new DoorDef(this, name, id).addTextures(useTextures), false);
-            case 'fence_gate': return this.addBlock(new FenceGateDef(this, name, id).addTextures(useTextures), false);
-            case 'fence': return this.addBlock(new FenceDef(this, name, id).addTextures(useTextures), false);
-            case 'pillar': return this.addBlock(new PillarBlockDef(this, name, id).addTextures(useTextures), false);
-            case 'pressure_plate': return this.addBlock(new PressurePlateDef(this, name, id).addTextures(useTextures), false);
-            case 'sapling': return this.addBlock(new SaplingDef(this, name, id).addTextures(useTextures), false);
-            case 'sign': return this.addBlock(new SignDef(this, name, id).addTextures(useTextures), false);
-            case 'slab': return this.addBlock(new SlabDef(this, name, id).addTextures(useTextures), false);
-            case 'stairs': return this.addBlock(new StairsDef(this, name, id).addTextures(useTextures), false);
-            case 'stem': return this.addBlock(new StemDef(this, name, id).addTextures(useTextures), false);
-            case 'trapdoor': return this.addBlock(new TrapdoorDef(this, name, id).addTextures(useTextures), false);
-            case 'wall': return this.addBlock(new WallDef(this, name, id).addTextures(useTextures), false);
+            case 'activator_rail': return this.addBlock(new ActivatorRailDef(this, name, id), false);
+            case 'anvil': return this.addBlock(new AnvilDef(this, name, id), false);
+            case 'barrel': return this.addBlock(new BarrelDef(this, name, id), false);
+            case 'button': return this.addBlock(new ButtonDef(this, name, id), false);
+            case 'cluster': return this.addBlock(new ClusterDef(this, name, id), false);
+            case 'cube': return this.addBlock(new BlockDef(this, name, id), false);
+            case 'door': return this.addBlock(new DoorDef(this, name, id), false);
+            case 'fence_gate': return this.addBlock(new FenceGateDef(this, name, id), false);
+            case 'fence': return this.addBlock(new FenceDef(this, name, id), false);
+            case 'pillar': return this.addBlock(new PillarBlockDef(this, name, id), false);
+            case 'pressure_plate': return this.addBlock(new PressurePlateDef(this, name, id), false);
+            case 'sapling': return this.addBlock(new SaplingDef(this, name, id), false);
+            case 'sign': return this.addBlock(new SignDef(this, name, id), false);
+            case 'slab': return this.addBlock(new SlabDef(this, name, id), false);
+            case 'stairs': return this.addBlock(new StairsDef(this, name, id), false);
+            case 'stem': return this.addBlock(new StemDef(this, name, id), false);
+            case 'trapdoor': return this.addBlock(new TrapdoorDef(this, name, id), false);
+            case 'wall': return this.addBlock(new WallDef(this, name, id), false);
             default: return console.warn(`Unknown block type: ${type}`, false);
         }
     }
@@ -144,7 +146,32 @@ export default class ModCacher {
         });
     }
 
+    private readTexturesFromDatabase() {
+        return new Promise<TexturesTableSchema[]>((resolve, reject) => {
+            if (!this.db) {
+                reject(new Error('Database not initialized'));
+
+                return;
+            }
+
+            const transaction = this.db.transaction('textures', 'readonly');
+            const store = transaction.objectStore('textures');
+            const request = store.getAll();
+
+            request.onsuccess = (event) => {
+                resolve((event.target as IDBRequest).result as TexturesTableSchema[]);
+            };
+
+            request.onerror = (event) => {
+                reject((event.target as IDBRequest).error);
+            };
+        });
+    }
+
     private async loadFromDatabase() {
+        const textures = await this.readTexturesFromDatabase();
+        textures.forEach(({ name, base64 }) => this.addTexture(name, base64, false));
+
         const blocks = await this.readBlocksFromDatabase();
         blocks.forEach((schema) => this.loadBlockFromSchema(schema));
 
@@ -168,12 +195,12 @@ export default class ModCacher {
                 store.put({
                     id: block.id,
                     name: block.name,
-                    type: block.type,
-                    textures: JSON.stringify(Array.from(block.textureCache))
+                    type: block.type
                 });
             });
 
             transaction.oncomplete = () => {
+                console.debug('Wrote', this.blockCache.size, 'blocks to database');
                 resolve();
             };
 
@@ -199,12 +226,12 @@ export default class ModCacher {
                 store.put({
                     id: item.id,
                     name: item.name,
-                    type: item.type,
-                    textures: JSON.stringify(Array.from(item.textureCache))
+                    type: item.type
                 });
             });
 
             transaction.oncomplete = () => {
+                console.debug('Wrote', this.itemCache.size, 'items to database');
                 resolve();
             };
 
@@ -214,7 +241,37 @@ export default class ModCacher {
         });
     }
 
-    addItem(content: IItem<ModCacher>, runEvent = true) {
+    private storeTextures() {
+        return new Promise<void>((resolve, reject) => {
+            if (!this.db) {
+                reject(new Error('Database not initialized'));
+
+                return;
+            }
+
+            const transaction = this.db.transaction('textures', 'readwrite');
+            const store = transaction.objectStore('textures');
+            store.clear();
+
+            this.textureCache.forEach((base64, name) => {
+                store.put({
+                    name,
+                    base64
+                });
+            });
+
+            transaction.oncomplete = () => {
+                console.debug('Wrote', this.textureCache.size, 'textures to database');
+                resolve();
+            };
+
+            transaction.onerror = (event) => {
+                reject((event.target as IDBTransaction).error);
+            };
+        });
+    }
+
+    addItem(content: ItemBase<ModCacher>, runEvent = true) {
         this.itemCache.set(content.id, content);
         if (runEvent)
             this.storeItems();
@@ -225,7 +282,7 @@ export default class ModCacher {
         this.storeItems();
     }
 
-    addBlock(content: IBlock<ModCacher>, runEvent = true) {
+    addBlock(content: BlockBase<ModCacher, ItemBase<ModCacher>>, runEvent = true) {
         this.blockCache.set(content.id, content);
         if (runEvent)
             this.storeBlocks();
@@ -236,16 +293,31 @@ export default class ModCacher {
         this.storeBlocks();
     }
 
-    update() {
-        this.storeBlocks();
-        this.storeItems();
+    addTexture(name: string, base64: string, runEvent = true) {
+        this.textureCache.set(name, base64);
+        if (runEvent)
+            this.storeTextures();
+    }
+
+    deleteTexture(name: string) {
+        this.textureCache.delete(name);
+        this.storeTextures();
+    }
+
+    async update() {
+        console.debug('Updating database values for', this.name);
+
+        await this.storeBlocks();
+        await this.storeItems();
+        await this.storeTextures();
 
         if (!this.updater)
             return;
 
         const cacheData: CachedData = {
             blockCache: this.blockCache,
-            itemCache: this.itemCache
+            itemCache: this.itemCache,
+            texturesCache: this.textureCache
         };
 
         this.updater(cacheData);
@@ -259,6 +331,10 @@ export default class ModCacher {
         return Array.from(this.itemCache.values()).filter((item) => item.name === name && (!type || item.type === type));
     }
 
+    getTexture(name: string) {
+        return this.textureCache.get(name);
+    }
+
     async exportDatabase() {
         const zip = new JSZip();
 
@@ -268,6 +344,11 @@ export default class ModCacher {
         zip.file('meta.json', JSON.stringify({ namespace: this.name }));
         zip.file('blocks.json', JSON.stringify(blocks));
         zip.file('items.json', JSON.stringify(items));
+
+        this.textureCache.forEach((base64, name) => {
+            const file = base64ToFile(name, base64);
+            zip.file(`textures/${name}.png`, file);
+        });
 
         const zipContent = await zip.generateAsync({ type: 'blob' });
         const zipFile = new File([zipContent], `${this.name}_export.zip`);
@@ -290,6 +371,100 @@ export default class ModCacher {
         blocks.forEach((schema) => this.loadBlockFromSchema(schema));
         items.forEach((schema) => this.loadItemFromSchema(schema));
 
+        const textures = zip.folder('textures');
+        if (textures) {
+            await Promise.all(textures.filter(Boolean).map(async (texture) => {
+                const name = texture.name.split('.')[0];
+                const base64 = await texture.async('base64');
+
+                this.textureCache.set(name, base64);
+            }));
+        }
+
+        await this.initDb();
+
+        this.update(); // This writes the new database using the imported namespace.
+    }
+
+    async importResources(file: File, name?: string) {
+        const zip = await JSZip.loadAsync(file);
+
+        let assets: JSZip | null = null;
+        let data: JSZip | null = null;
+
+        const resources = zip.folder('resources');
+        if (resources) {
+            assets = resources.folder('assets');
+            data = resources.folder('data');
+        }
+        else {
+            assets = zip.folder('assets');
+            data = zip.folder('data');
+        }
+
+        if (!assets && !data)
+            throw new Error('Invalid resources');
+
+        let namespaces: Set<string> | undefined = undefined;
+
+        if (assets) {
+            namespaces = getResourcesNamespaces(assets);
+
+            if (namespaces.size === 0)
+                return;
+
+            if (namespaces.size === 1) {
+                const useName = name || namespaces.values().next().value;
+                if (!useName)
+                    return;
+
+                this.name = useName;
+            }
+
+            await this.initDb();
+
+            await Promise.all(Array.from(namespaces).map(async (namespace) => {
+                const namespaceFolder = assets.folder(namespace);
+                if (namespaceFolder) {
+                    const content = await processAssetsResources(namespaceFolder);
+                    if (!content)
+                        return;
+
+                    const { blocks, items } = content;
+
+                    blocks.forEach((block) => this.loadBlockFromSchema(block));
+                    items.forEach((item) => this.loadItemFromSchema(item));
+                }
+            }));
+        }
+
+        if (data) {
+            if (!namespaces) {
+                namespaces = getResourcesNamespaces(data);
+
+                if (namespaces.size === 0)
+                    return;
+
+                if (namespaces.size === 1) {
+                    const useName = name || namespaces.values().next().value;
+                    if (!useName)
+                        return;
+
+                    this.name = useName;
+                }
+
+                await this.initDb();
+            }
+
+            const namespaceFolder = data.folder(this.name);
+            if (!namespaceFolder)
+                throw new Error('Invalid data - missing namespace folder');
+
+            // const lootTables = namespaceFolder.folder('loot_tables');
+            // const recipes = namespaceFolder.folder('recipes');
+            // const tags = namespaceFolder.folder('tags');
+        }
+
         this.update(); // This writes the new database using the imported namespace.
     }
 
@@ -300,35 +475,12 @@ export default class ModCacher {
         this.db.close();
     }
 
-    async delete() {
+    delete(ctx: AppDataContext) {
         this.destroy();
 
-        const dbInstance = await new Promise<IDBDatabase>((resolve, reject) => {
-            const request = indexedDB.open('app-data', 1);
+        ctx.removeNamespace(this.name);
 
-            request.onupgradeneeded = (event) => {
-                const db = (event.target as IDBOpenDBRequest).result;
-                db.createObjectStore('namespaces', { keyPath: 'id' });
-            };
-
-            request.onsuccess = (event) => {
-                resolve((event.target as IDBOpenDBRequest).result);
-            };
-
-            request.onerror = (event) => {
-                reject((event.target as IDBOpenDBRequest).error);
-            };
-        });
-
-        const transaction = dbInstance.transaction('namespaces', 'readwrite');
-        const store = transaction.objectStore('namespaces');
-        store.delete(this.name);
-
-        transaction.oncomplete = () => {
-            dbInstance.close();
-
-            indexedDB.deleteDatabase(`ns_${this.name}`);
-        };
+        indexedDB.deleteDatabase(`ns_${this.name}`);
     }
 
     constructor(name: string, updater: (data: CachedData) => void) {

@@ -1,39 +1,50 @@
 import './styles/texture-form.scss';
 import { Button } from '@chrisofnormandy/confects/buttons';
 import { Dispatch, useActionState } from 'react';
-import { IBlock } from '../../../../../content/blocks/IBlock';
-import { Input } from '@chrisofnormandy/confects/inputs';
-import ModCacher from '../../../../../content/ModCacher';
-import ModDef from '../../../../../content/ModDef';
 import { getClassName } from '@chrisofnormandy/confects/helpers';
-import { themes } from '@chrisofnormandy/confetti/themes';
 import { Icon } from '@chrisofnormandy/confects/decorations';
+import { Input } from '@chrisofnormandy/confects/inputs';
+import { themes } from '@chrisofnormandy/confetti/themes';
+import BlockBase from '../../content/blocks/BlockBase';
+import ItemBase from '../../content/items/ItemBase';
+import ModCacher from '../../content/ModCacher';
+import ModDef from '../../content/ModDef';
+
+interface TextureFormProps {
+    mod: ModDef
+    block?: BlockBase<ModCacher, ItemBase<ModCacher>>
+    item?: ItemBase<ModCacher>
+    name: string
+    label: string
+    setCanEdit: Dispatch<boolean>
+    base64: string
+}
 
 export default function TextureForm(
     {
         mod,
         block,
+        item,
         name,
         setCanEdit,
         base64,
-        disabled
-    }: { mod: ModDef, block: IBlock<ModCacher>, name: string, setCanEdit: Dispatch<boolean>, base64: string, disabled: boolean }
+        label
+    }: TextureFormProps
 ) {
-    const formId = `texture_form:${block.id}:${name}`;
+    const content = block || item;
 
     const [editTextureError, editTextureSubmitAction, editTexturePending] = useActionState<Error | null, FormData>(
         (_previousState, formData) => {
-            const _textureName = formData.get('_texture_name') as string;
-            const textureName = formData.get('texture_name') as string;
-            const useTextureName = textureName.split('.')[0]; // Get the name without extension stuff
+            if (!content)
+                return new Error('Content not found');
+
+            const oldName = formData.get('old_name') as string;
+            const newName = formData.get('new_name') as string;
+            const useTextureName = newName.split('.')[0]; // Get the name without extension stuff
 
             try {
-                const base64 = block.textureCache.get(_textureName);
-                if (!base64)
-                    return new Error('Texture not found');
-
-                block.textureCache.delete(_textureName);
-                block.textureCache.set(useTextureName, base64);
+                content.textures.delete(oldName);
+                content.textures.add([useTextureName, base64]);
 
                 mod.update();
 
@@ -54,7 +65,11 @@ export default function TextureForm(
         null
     );
 
-    const lockFormSubmits = disabled || editTexturePending;
+    if (!content)
+        return null;
+
+    const lockFormSubmits = editTexturePending;
+    const formId = `texture_form:${content.id}:${name}`;
 
     return <form
         id={formId}
@@ -62,6 +77,8 @@ export default function TextureForm(
         className={getClassName('texture-form', themes.getBasicStyling('trinary'))}
     >
         {editTextureError && editTextureError.message}
+
+        {label}
 
         <figure>
             <img
@@ -73,7 +90,7 @@ export default function TextureForm(
 
             <figcaption>
                 <Input
-                    name='_texture_name'
+                    name='old_name'
                     value={name}
                     required
                     readOnly
@@ -81,7 +98,7 @@ export default function TextureForm(
                 />
 
                 <Input
-                    name='texture_name'
+                    name='new_name'
                     defaultValue={name}
                     required
                     placeholder='Texture Name'

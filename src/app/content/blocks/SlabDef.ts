@@ -1,137 +1,118 @@
 import { v4 } from 'uuid';
-import BlockBase from './IBlock';
+import BlockBase from './BlockBase';
 import ModCacher from '../ModCacher';
+import { BlockModel, BlockState, LootTable, ManagedContentData, Recipe } from '../types';
+import ItemBase from '../items/ItemBase';
 
-export default class SlabDef<M extends ModCacher> extends BlockBase<M> {
+export default class SlabDef<M extends ModCacher> extends BlockBase<M, ItemBase<M>> {
 
     getName() {
         return `${this.name}_slab`;
     }
 
-    _blockState() {
+    private _blockState(): ManagedContentData<BlockState> {
         return {
-            variants: {
-                'type=bottom': {
-                    model: `${this.mod.getName()}:block/${this.getName()}`
-                },
-                'type=top': {
-                    model: `${this.mod.getName()}:block/${this.getName()}_top`
-                },
-                'type=double': {
-                    model: `${this.mod.getName()}:block/${this.name}`
+            data: {
+                variants: {
+                    'type=bottom': {
+                        model: `${this.mod.getName()}:block/${this.getName()}`
+                    },
+                    'type=top': {
+                        model: `${this.mod.getName()}:block/${this.getName()}_top`
+                    },
+                    'type=double': {
+                        model: `${this.mod.getName()}:block/${this.name}`
+                    }
                 }
             }
         };
     }
 
-    _model() {
+    private _model(): ManagedContentData<BlockModel> {
         return {
-            'parent': 'minecraft:block/slab',
-            'textures': {
-                'bottom': `${this.mod.getName()}:block/${this.name}`,
-                'top': `${this.mod.getName()}:block/${this.name}`,
-                'side': `${this.mod.getName()}:block/${this.name}`
-            }
-        };
-    }
-
-    _modelTop() {
-        return {
-            'parent': 'minecraft:block/slab_top',
-            'textures': {
-                'bottom': `${this.mod.getName()}:block/${this.name}`,
-                'top': `${this.mod.getName()}:block/${this.name}`,
-                'side': `${this.mod.getName()}:block/${this.name}`
-            }
-        };
-    }
-
-    _modelItem() {
-        return {
-            parent: `${this.mod.getName()}:block/${this.getName()}`
-        };
-    }
-
-    _recipe() {
-        return {
-            type: 'minecraft:crafting_shaped',
-            group: 'wooden',
-            pattern: [
-                '###'
-            ],
-            key: {
-                '#': {
-                    item: `${this.mod.getName()}:${this.name}`
+            data: {
+                parent: 'minecraft:block/slab',
+                textures: {
+                    bottom: `${this.mod.getName()}:block/${this.name}`,
+                    top: `${this.mod.getName()}:block/${this.name}`,
+                    side: `${this.mod.getName()}:block/${this.name}`
                 }
-            },
-            result: {
-                item: `${this.mod.getName()}:${this.getName()}`,
-                count: 6
             }
         };
     }
 
-    _lootTable() {
+    private _modelTop(): ManagedContentData<BlockModel> {
         return {
-            type: 'minecraft:block',
-            pools: [
-                {
-                    rolls: 1.0,
-                    bonus_rolls: 0.0,
-                    entries: [
-                        {
-                            type: 'minecraft:item',
-                            functions: [
-                                {
-                                    function: 'minecraft:set_count',
-                                    conditions: [
-                                        {
-                                            condition: 'minecraft:block_state_property',
-                                            block: `${this.mod.getName()}:${this.getName()}`,
-                                            properties: {
-                                                type: 'double'
+            path: this.mod.paths.blockModels(`${this.getName()}_top.json`),
+            data: {
+                parent: 'minecraft:block/slab_top',
+                textures: {
+                    bottom: `${this.mod.getName()}:block/${this.name}`,
+                    top: `${this.mod.getName()}:block/${this.name}`,
+                    side: `${this.mod.getName()}:block/${this.name}`
+                }
+            }
+        };
+    }
+
+    private _recipe(): ManagedContentData<Recipe> {
+        return {
+            data: {
+                type: 'minecraft:crafting_shaped',
+                group: 'wooden',
+                pattern: [
+                    '###'
+                ],
+                key: {
+                    '#': {
+                        item: `${this.mod.getName()}:${this.name}`
+                    }
+                },
+                result: {
+                    item: `${this.mod.getName()}:${this.getName()}`,
+                    count: 6
+                }
+            }
+        };
+    }
+
+    private _lootTable(): ManagedContentData<LootTable> {
+        return {
+            data: {
+                type: 'minecraft:block',
+                pools: [
+                    {
+                        rolls: 1.0,
+                        bonus_rolls: 0.0,
+                        entries: [
+                            {
+                                type: 'minecraft:item',
+                                functions: [
+                                    {
+                                        function: 'minecraft:set_count',
+                                        conditions: [
+                                            {
+                                                condition: 'minecraft:block_state_property',
+                                                block: `${this.mod.getName()}:${this.getName()}`,
+                                                properties: {
+                                                    type: 'double'
+                                                }
                                             }
-                                        }
-                                    ],
-                                    count: 2.0,
-                                    add: false
-                                },
-                                {
-                                    function: 'minecraft:explosion_decay'
-                                }
-                            ],
-                            name: `${this.mod.getName()}:${this.getName()}`
-                        }
-                    ]
-                }
-            ]
+                                        ],
+                                        count: 2.0,
+                                        add: false
+                                    },
+                                    {
+                                        function: 'minecraft:explosion_decay'
+                                    }
+                                ],
+                                name: `${this.mod.getName()}:${this.getName()}`
+                            }
+                        ]
+                    }
+                ]
+            }
         };
-    }
-
-    blockState() {
-        return [
-            new File([JSON.stringify(this._blockState(), null, 4)], this.mod.paths.blockStates(`${this.getName()}.json`), { type: 'application/json' })
-        ];
-    }
-
-    model() {
-        return [
-            new File([JSON.stringify(this._model(), null, 4)], this.mod.paths.blockModels(`${this.getName()}.json`), { type: 'application/json' }),
-            new File([JSON.stringify(this._modelTop(), null, 4)], this.mod.paths.blockModels(`${this.getName()}_top.json`), { type: 'application/json' }),
-            new File([JSON.stringify(this._modelItem(), null, 4)], this.mod.paths.itemModels(`${this.getName()}.json`), { type: 'application/json' })
-        ];
-    }
-
-    recipe() {
-        return [
-            new File([JSON.stringify(this._recipe(), null, 4)], this.mod.paths.recipes(`${this.getName()}.json`), { type: 'application/json' })
-        ];
-    }
-
-    lootTable() {
-        return [
-            new File([JSON.stringify(this._lootTable(), null, 4)], this.mod.paths.blocksLootTables(`${this.getName()}.json`), { type: 'application/json' })
-        ];
     }
 
     /**
@@ -141,5 +122,13 @@ export default class SlabDef<M extends ModCacher> extends BlockBase<M> {
      */
     constructor(mod: M, name: string, id?: string) {
         super(mod, name, 'slab', id || v4());
+
+        this.blockState.add(this._blockState.bind(this));
+        this.model.set(
+            this._model.bind(this),
+            this._modelTop.bind(this)
+        );
+        this.lootTable.set(this._lootTable.bind(this));
+        this.recipe.set(this._recipe.bind(this));
     }
 }

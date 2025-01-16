@@ -1,18 +1,29 @@
-import { IBlock } from '../../../../../content/blocks/IBlock';
 import { useState } from 'react';
-import ModCacher from '../../../../../content/ModCacher';
-import ModDef from '../../../../../content/ModDef';
+import ModCacher from '../../content/ModCacher';
+import ModDef from '../../content/ModDef';
 import TextureDisplay from './TextureDisplay';
 import TextureForm from './TextureForm';
+import BlockBase from '../../content/blocks/BlockBase';
+import ItemBase from '../../content/items/ItemBase';
+
+interface TextureSwitchProps {
+    base64: string,
+    block?: BlockBase<ModCacher, ItemBase<ModCacher>>,
+    item?: ItemBase<ModCacher>,
+    mod: ModDef,
+    name: string
+    label: string
+}
 
 export default function TextureSwitch(
     {
-        block,
-        mod,
-        name,
         base64,
-        lockFormSubmits
-    }: { block: IBlock<ModCacher>, mod: ModDef, name: string, base64: string, lockFormSubmits: boolean }
+        block,
+        item,
+        mod,
+        label,
+        name
+    }: TextureSwitchProps
 ) {
     const [canEdit, setCanEdit] = useState(false);
 
@@ -20,16 +31,18 @@ export default function TextureSwitch(
         return <TextureForm
             mod={mod}
             block={block}
+            item={item}
+            label={label}
             name={name}
             setCanEdit={setCanEdit}
             base64={base64}
-            disabled={lockFormSubmits}
         />;
 
     return <TextureDisplay
         base64={base64}
-        disabled={lockFormSubmits}
+        label={label}
         block={block}
+        item={item}
         key={name}
         name={name}
         setCanEdit={setCanEdit}

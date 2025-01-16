@@ -1,0 +1,14 @@
+{
+    "name": "Minecraft JSON GUI",
+    "short_name": "MC JSON GUI",
+    "description": "A web application for managing Minecraftmod content.",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#000000",
+    "theme_color": "#000000",
+    "icons": [],
+    "permissions": [
+        "storage",
+        "notifications"
+    ]
+}

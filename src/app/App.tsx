@@ -1,9 +1,10 @@
 import './styles/app.scss';
+import { AppDataProvider } from './components/app-data/AppDataProvider';
 import { getClassName } from '@chrisofnormandy/confects/helpers';
 import { Heading } from '@chrisofnormandy/confects/decorations';
 import { Nav, Page, PageBody, PageFooter, PageHeader } from '@chrisofnormandy/confects/containers';
-import { themes } from '@chrisofnormandy/confetti/themes';
 import { NavLink, Outlet } from 'react-router';
+import { themes } from '@chrisofnormandy/confetti/themes';
 import { useEffect } from 'react';
 
 export default function App() {
@@ -23,6 +24,7 @@ export default function App() {
                     to='/'>
                     Home
                 </NavLink>
+
                 <NavLink
                     to='/mods'>
                     Mods
@@ -33,7 +35,9 @@ export default function App() {
         <PageBody
             className={getClassName(themes.getStyles({ background: { style: 'body' } }))}
         >
-            <Outlet />
+            <AppDataProvider>
+                <Outlet />
+            </AppDataProvider>
         </PageBody>
 
         <PageFooter>

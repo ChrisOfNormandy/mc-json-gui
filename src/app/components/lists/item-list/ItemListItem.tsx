@@ -1,22 +1,27 @@
 import './styles/item-list-item.scss';
 import { Button } from '@chrisofnormandy/confects/buttons';
 import { Icon } from '@chrisofnormandy/confects/decorations';
-import { IItem } from '../../../content/items/IItem';
 import { Input } from '@chrisofnormandy/confects/inputs';
 import { useActionState } from 'react';
 import ContentListItem from '../ContentListItem';
+import ItemBase from '../../../content/items/ItemBase';
 import ModCacher from '../../../content/ModCacher';
 import ModDef from '../../../content/ModDef';
-import Textures from './fragments/textures/Textures';
+import Textures from '../../textures/Textures';
+
+interface ItemListItemProps {
+    mod: ModDef
+    item: ItemBase<ModCacher>
+    downloadFiles: (files: File[]) => Promise<void>
+}
 
 export default function ItemListItem(
     {
         mod,
-        itemDef,
+        item,
         downloadFiles
-    }: { mod: ModDef, itemDef: IItem<ModCacher>, downloadFiles: (files: File[]) => Promise<void> }
+    }: ItemListItemProps
 ) {
-
     const [error, submitAction, isPending] = useActionState<Error | null, FormData>(
         (_previousState, formData) => {
             const itemId = formData.get('_item_id') as string;
@@ -29,7 +34,7 @@ export default function ItemListItem(
 
             const newFormData = new FormData();
             newFormData.append('item_name', itemName);
-            newFormData.append('item_type', itemDef.type);
+            newFormData.append('item_type', item.type);
 
             mod.addItemFormData(newFormData);
 
@@ -42,7 +47,7 @@ export default function ItemListItem(
         className='item'
     >
         <Textures
-            item={itemDef}
+            item={item}
             mod={mod}
         />
 
@@ -52,7 +57,7 @@ export default function ItemListItem(
             className='content-name'
         >
             <form
-                id={`item_edit_form:${itemDef.id}`}
+                id={`item_edit_form:${item.id}`}
                 action={submitAction}
             >
                 <Input
@@ -60,20 +65,20 @@ export default function ItemListItem(
                     hidden
                     required
                     readOnly
-                    value={itemDef.id}
+                    value={item.id}
                 />
 
                 <Input
                     name='item_name'
                     placeholder='Item Name'
-                    defaultValue={itemDef.name}
+                    defaultValue={item.name}
                     required
                     pattern={/^[a-z0-9_]+$/.source}
                 />
 
                 <Button
                     disabled={isPending}
-                    submit={`item_edit_form:${itemDef.id}`}
+                    submit={`item_edit_form:${item.id}`}
                 >
                     Rename
                 </Button>
@@ -82,9 +87,9 @@ export default function ItemListItem(
             <span
                 className='content-type'
             >
-                {itemDef.type}
+                {item.type}
                 {':'}
-                {itemDef.id.slice(0, 8)}
+                {item.id.slice(0, 8)}
             </span>
         </div>
 
@@ -95,7 +100,7 @@ export default function ItemListItem(
                 disabled={isPending}
                 onClick={
                     async () => {
-                        const files = itemDef.model();
+                        const files = item.model.file();
                         await downloadFiles(files);
                     }
                 }
@@ -113,7 +118,7 @@ export default function ItemListItem(
                 disabled={isPending}
                 onClick={
                     async () => {
-                        const files = itemDef.recipe();
+                        const files = item.recipe.file();
                         await downloadFiles(files);
                     }
                 }
@@ -133,7 +138,7 @@ export default function ItemListItem(
         >
             <Button
                 onClick={() => {
-                    mod.deleteItem(itemDef.id);
+                    mod.deleteItem(item.id);
                     mod.update();
                 }}
                 disabled={isPending}

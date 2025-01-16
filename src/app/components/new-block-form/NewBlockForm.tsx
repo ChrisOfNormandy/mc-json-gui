@@ -1,11 +1,11 @@
 import './styles/new-block-form.scss';
-import { BlockType } from '../../content/blocks/IBlock';
+import { BlockType } from '../../content/types';
 import { Button } from '@chrisofnormandy/confects/buttons';
+import { getClassName } from '@chrisofnormandy/confects/helpers';
 import { Input } from '@chrisofnormandy/confects/inputs';
+import { themes } from '@chrisofnormandy/confetti/themes';
 import { useActionState } from 'react';
 import ModDef from '../../content/ModDef';
-import { getClassName } from '@chrisofnormandy/confects/helpers';
-import { themes } from '@chrisofnormandy/confetti/themes';
 
 const BLOCK_TYPES: BlockType[] = [
     'activator_rail',

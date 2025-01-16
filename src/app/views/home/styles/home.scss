@@ -1,0 +1,10 @@
+@use '~layout' as layout;
+
+.page-main.home {
+    @include layout.flex-center(true);
+
+    .content-options {
+        @include layout.flex-even(true);
+        @include layout.wide;
+    }
+}

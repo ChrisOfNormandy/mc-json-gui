@@ -1,69 +1,74 @@
 import { v4 } from 'uuid';
 import ModCacher from '../ModCacher';
-import BlockBase from './IBlock';
+import BlockBase from './BlockBase';
+import { BlockModel, BlockState, ItemModel, ManagedContentData } from '../types';
+import ItemBase from '../items/ItemBase';
 
-export default class PillarBlockDef<M extends ModCacher> extends BlockBase<M> {
+export default class PillarBlockDef<M extends ModCacher> extends BlockBase<M, ItemBase<M>> {
 
-    _blockState() {
+    private _blockState(): ManagedContentData<BlockState> {
         return {
-            variants: {
-                'axis=x': {
-                    model: `${this.mod.getName()}:block/${this.getName()}_horizontal`,
-                    x: 90,
-                    y: 90
-                },
-                'axis=y': {
-                    model: `${this.mod.getName()}:block/${this.getName()}`
-                },
-                'axis=z': {
-                    model: `${this.mod.getName()}:block/${this.getName()}_horizontal`,
-                    x: 90
+            data: {
+                variants: {
+                    'axis=x': {
+                        model: `${this.mod.getName()}:block/${this.getName()}_horizontal`,
+                        x: 90,
+                        y: 90
+                    },
+                    'axis=y': {
+                        model: `${this.mod.getName()}:block/${this.getName()}`
+                    },
+                    'axis=z': {
+                        model: `${this.mod.getName()}:block/${this.getName()}_horizontal`,
+                        x: 90
+                    }
                 }
             }
         };
     }
 
-    _model() {
+    private _model(): ManagedContentData<BlockModel> {
         return {
-            parent: 'minecraft:block/cube_column',
-            textures: {
-                end: `${this.mod.getName()}:block/${this.getName()}_top`,
-                side: `${this.mod.getName()}:block/${this.getName()}`
+            path: this.mod.paths.blockModels(`${this.getName()}.json`),
+            data: {
+                parent: 'minecraft:block/cube_column',
+                textures: {
+                    end: `${this.mod.getName()}:block/${this.getName()}_top`,
+                    side: `${this.mod.getName()}:block/${this.getName()}`
+                }
             }
         };
     }
 
-    _modelHorizontal() {
+    private _modelHorizontal(): ManagedContentData<BlockModel> {
         return {
-            parent: 'minecraft:block/cube_column_horizontal',
-            textures: {
-                end: `${this.mod.getName()}:block/${this.getName()}_top`,
-                side: `${this.mod.getName()}:block/${this.getName()}`
+            path: this.mod.paths.blockModels(`${this.getName()}_horizontal.json`),
+            data: {
+                parent: 'minecraft:block/cube_column_horizontal',
+                textures: {
+                    end: `${this.mod.getName()}:block/${this.getName()}_top`,
+                    side: `${this.mod.getName()}:block/${this.getName()}`
+                }
             }
         };
     }
 
-    _itemModel() {
+    private _itemModel(): ManagedContentData<ItemModel> {
         return {
-            parent: `${this.mod.getName()}:block/${this.getName()}`
+            data: {
+                parent: `${this.mod.getName()}:block/${this.getName()}`
+            }
         };
-    }
-
-    blockState() {
-        return [
-            new File([JSON.stringify(this._blockState(), null, 4)], this.mod.paths.blockStates(`${this.getName()}.json`), { type: 'application/json' })
-        ];
-    }
-
-    model() {
-        return [
-            new File([JSON.stringify(this._model(), null, 4)], this.mod.paths.blockModels(`${this.getName()}.json`), { type: 'application/json' }),
-            new File([JSON.stringify(this._modelHorizontal(), null, 4)], this.mod.paths.blockModels(`${this.getName()}_horizontal.json`), { type: 'application/json' }),
-            new File([JSON.stringify(this._itemModel(), null, 4)], this.mod.paths.itemModels(`${this.getName()}.json`), { type: 'application/json' })
-        ];
     }
 
     constructor(mod: M, name: string, id?: string) {
         super(mod, name, 'pillar', id || v4());
+
+        this.blockState.set(this._blockState.bind(this));
+        this.model.set(
+            this._model.bind(this),
+            this._modelHorizontal.bind(this)
+        );
+        this.item.model.set(this._itemModel.bind(this));
     }
 }

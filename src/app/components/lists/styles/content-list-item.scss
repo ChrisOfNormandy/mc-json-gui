@@ -2,7 +2,7 @@
 @use '~styling' as styling;
 
 .content-list-item {
-    @include layout.flex(true);
+    @include layout.flex-between(true);
     @include styling.rounded;
 
     padding: 5px 10px;

@@ -1,0 +1,13 @@
+@use '~layout' as layout;
+
+.mod-creation-form {
+    @include layout.flex(true, true);
+
+    .fields {
+        padding: 5px;
+
+        .input {
+            text-align: center;
+        }
+    }
+}

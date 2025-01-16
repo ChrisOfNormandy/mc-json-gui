@@ -2,20 +2,36 @@ import './styles/texture-display.scss';
 import { Button } from '@chrisofnormandy/confects/buttons';
 import { Dispatch } from 'react';
 import { getClassName } from '@chrisofnormandy/confects/helpers';
-import { IBlock } from '../../../../../content/blocks/IBlock';
 import { Icon } from '@chrisofnormandy/confects/decorations';
 import { themes } from '@chrisofnormandy/confetti/themes';
-import ModCacher from '../../../../../content/ModCacher';
+import BlockBase from '../../content/blocks/BlockBase';
+import ItemBase from '../../content/items/ItemBase';
+import ModCacher from '../../content/ModCacher';
 
-export default function TextureDisplay(
+interface TextureDisplayProps<M extends ModCacher> {
+    base64: string
+    item?: ItemBase<M>
+    block?: BlockBase<M, ItemBase<M>>
+    name: string
+    setCanEdit: Dispatch<boolean>
+    label: string
+}
+
+export default function TextureDisplay<M extends ModCacher>(
     {
         base64,
         name,
         setCanEdit,
-        disabled,
-        block
-    }: { block: IBlock<ModCacher>, base64: string, name: string, setCanEdit: Dispatch<boolean>, disabled: boolean }
+        block,
+        item,
+        label
+    }: TextureDisplayProps<M>
 ) {
+    const content = block || item;
+
+    if (!content)
+        return null;
+
     return <div
         className={getClassName('texture-display', themes.getBasicStyling('trinary'))}
     >
@@ -28,7 +44,7 @@ export default function TextureDisplay(
             />
 
             <figcaption>
-                {name}
+                {label}:{name}
             </figcaption>
         </figure>
 
@@ -37,7 +53,6 @@ export default function TextureDisplay(
         >
             <Button
                 onClick={() => setCanEdit(true)}
-                disabled={disabled}
             >
                 <Icon
                     icon='pencil'
@@ -49,10 +64,9 @@ export default function TextureDisplay(
             </Button>
 
             <Button
-                disabled={disabled}
                 onClick={() => {
-                    block.textureCache.delete(name);
-                    block.mod.update();
+                    content.textures.map.delete(name);
+                    content.mod.update();
                 }}
             >
                 <Icon

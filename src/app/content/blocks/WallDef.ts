@@ -1,191 +1,189 @@
 import { v4 } from 'uuid';
-import BlockBase from './IBlock';
+import BlockBase from './BlockBase';
 import ModCacher from '../ModCacher';
+import { BlockModel, BlockState, ItemModel, ManagedContentData, Recipe } from '../types';
+import ItemBase from '../items/ItemBase';
 
-export default class WallDef<M extends ModCacher> extends BlockBase<M> {
+export default class WallDef<M extends ModCacher> extends BlockBase<M, ItemBase<M>> {
 
     getName() {
         return `${this.name}_wall`;
     }
 
-    _blockState() {
+    private _blockState(): ManagedContentData<BlockState> {
         const postModel = `${this.mod.getName()}:block/${this.getName()}_post`;
         const sideModel = `${this.mod.getName()}:block/${this.getName()}_side`;
         const tallSideModel = `${this.mod.getName()}:block/${this.getName()}_side_tall`;
 
         return {
-            multipart: [
-                {
-                    when: {
-                        up: true
+            data: {
+                multipart: [
+                    {
+                        when: {
+                            up: true
+                        },
+                        apply: {
+                            model: postModel
+                        }
                     },
-                    apply: {
-                        model: postModel
-                    }
-                },
-                {
-                    when: {
-                        north: 'low'
+                    {
+                        when: {
+                            north: 'low'
+                        },
+                        apply: {
+                            model: sideModel,
+                            uvlock: true
+                        }
                     },
-                    apply: {
-                        model: sideModel,
-                        uvlock: true
-                    }
-                },
-                {
-                    when: {
-                        east: 'low'
+                    {
+                        when: {
+                            east: 'low'
+                        },
+                        apply: {
+                            model: sideModel,
+                            y: 90,
+                            uvlock: true
+                        }
                     },
-                    apply: {
-                        model: sideModel,
-                        y: 90,
-                        uvlock: true
-                    }
-                },
-                {
-                    when: {
-                        south: 'low'
+                    {
+                        when: {
+                            south: 'low'
+                        },
+                        apply: {
+                            model: sideModel,
+                            y: 180,
+                            uvlock: true
+                        }
                     },
-                    apply: {
-                        model: sideModel,
-                        y: 180,
-                        uvlock: true
-                    }
-                },
-                {
-                    when: {
-                        west: 'low'
+                    {
+                        when: {
+                            west: 'low'
+                        },
+                        apply: {
+                            model: sideModel,
+                            y: 270,
+                            uvlock: true
+                        }
                     },
-                    apply: {
-                        model: sideModel,
-                        y: 270,
-                        uvlock: true
-                    }
-                },
-                {
-                    when: {
-                        north: 'tall'
+                    {
+                        when: {
+                            north: 'tall'
+                        },
+                        apply: {
+                            model: tallSideModel,
+                            uvlock: true
+                        }
                     },
-                    apply: {
-                        model: tallSideModel,
-                        uvlock: true
-                    }
-                },
-                {
-                    when: {
-                        east: 'tall'
+                    {
+                        when: {
+                            east: 'tall'
+                        },
+                        apply: {
+                            model: tallSideModel,
+                            y: 90,
+                            uvlock: true
+                        }
                     },
-                    apply: {
-                        model: tallSideModel,
-                        y: 90,
-                        uvlock: true
-                    }
-                },
-                {
-                    when: {
-                        south: 'tall'
+                    {
+                        when: {
+                            south: 'tall'
+                        },
+                        apply: {
+                            model: tallSideModel,
+                            y: 180,
+                            uvlock: true
+                        }
                     },
-                    apply: {
-                        model: tallSideModel,
-                        y: 180,
-                        uvlock: true
+                    {
+                        when: {
+                            west: 'tall'
+                        },
+                        apply: {
+                            model: tallSideModel,
+                            y: 270,
+                            uvlock: true
+                        }
                     }
-                },
-                {
-                    when: {
-                        west: 'tall'
-                    },
-                    apply: {
-                        model: tallSideModel,
-                        y: 270,
-                        uvlock: true
-                    }
+                ]
+            }
+        };
+    }
+
+    private _modelInventory(): ManagedContentData<BlockModel> {
+        return {
+            path: this.mod.paths.blockModels(`${this.getName()}_inventory.json`),
+            data: {
+                parent: 'minecraft:block/wall_inventory',
+                textures: {
+                    wall: `${this.mod.getName()}:block/${this.name}`
                 }
-            ]
-        };
-    }
-
-    _modelInventory() {
-        return {
-            'parent': 'minecraft:block/wall_inventory',
-            'textures': {
-                'wall': `${this.mod.getName()}:block/${this.name}`
             }
         };
     }
 
-    _modelPost() {
+    private _modelPost(): ManagedContentData<BlockModel> {
         return {
-            'parent': 'minecraft:block/template_post',
-            'textures': {
-                'wall': `${this.mod.getName()}:block/${this.name}`
-            }
-        };
-    }
-
-    _modelSideTall() {
-        return {
-            'parent': 'minecraft:block/template_side_tall',
-            'textures': {
-                'wall': `${this.mod.getName()}:block/${this.name}`
-            }
-        };
-    }
-
-    _modelSide() {
-        return {
-            'parent': 'minecraft:block/template_side',
-            'textures': {
-                'wall': `${this.mod.getName()}:block/${this.name}`
-            }
-        };
-    }
-
-    _modelItem() {
-        return {
-            parent: `${this.mod.getName()}:block/${this.getName()}_inventory`
-        };
-    }
-
-    _recipe() {
-        return {
-            type: 'minecraft:crafting_shaped',
-            pattern: [
-                '###',
-                '###'
-            ],
-            key: {
-                '#': {
-                    'item': `${this.mod.getName()}:${this.name}`
+            path: this.mod.paths.blockModels(`${this.getName()}_post.json`),
+            data: {
+                parent: 'minecraft:block/template_post',
+                textures: {
+                    wall: `${this.mod.getName()}:block/${this.name}`
                 }
-            },
-            result: {
-                item: `${this.mod.getName()}:${this.getName()}`,
-                count: 6
             }
         };
     }
 
-    blockState() {
-        return [
-            new File([JSON.stringify(this._blockState(), null, 4)], this.mod.paths.blockStates(`${this.getName()}.json`), { type: 'application/json' })
-        ];
+    private _modelSideTall(): ManagedContentData<BlockModel> {
+        return {
+            path: this.mod.paths.blockModels(`${this.getName()}_side_tall.json`),
+            data: {
+                parent: 'minecraft:block/template_side_tall',
+                textures: {
+                    wall: `${this.mod.getName()}:block/${this.name}`
+                }
+            }
+        };
     }
 
-    model() {
-        return [
-            new File([JSON.stringify(this._modelInventory(), null, 4)], this.mod.paths.blockModels(`${this.getName()}_inventory.json`), { type: 'application/json' }),
-            new File([JSON.stringify(this._modelPost(), null, 4)], this.mod.paths.blockModels(`${this.getName()}_post.json`), { type: 'application/json' }),
-            new File([JSON.stringify(this._modelSideTall(), null, 4)], this.mod.paths.blockModels(`${this.getName()}_side_tall.json`), { type: 'application/json' }),
-            new File([JSON.stringify(this._modelSide(), null, 4)], this.mod.paths.blockModels(`${this.getName()}_side.json`), { type: 'application/json' }),
-            new File([JSON.stringify(this._modelItem(), null, 4)], this.mod.paths.itemModels(`${this.getName()}.json`), { type: 'application/json' })
-        ];
+    private _modelSide(): ManagedContentData<BlockModel> {
+        return {
+            path: this.mod.paths.blockModels(`${this.getName()}_side.json`),
+            data: {
+                parent: 'minecraft:block/template_side',
+                textures: {
+                    wall: `${this.mod.getName()}:block/${this.name}`
+                }
+            }
+        };
     }
 
-    recipe() {
-        return [
-            new File([JSON.stringify(this._recipe(), null, 4)], this.mod.paths.recipes(`${this.getName()}.json`), { type: 'application/json' })
-        ];
+    private _modelItem(): ManagedContentData<ItemModel> {
+        return {
+            data: {
+                parent: `${this.mod.getName()}:block/${this.getName()}_inventory`
+            }
+        };
+    }
+
+    private _recipe(): ManagedContentData<Recipe> {
+        return {
+            data: {
+                type: 'minecraft:crafting_shaped',
+                pattern: [
+                    '###',
+                    '###'
+                ],
+                key: {
+                    '#': {
+                        'item': `${this.mod.getName()}:${this.name}`
+                    }
+                },
+                result: {
+                    item: `${this.mod.getName()}:${this.getName()}`,
+                    count: 6
+                }
+            }
+        };
     }
 
     /**
@@ -195,5 +193,15 @@ export default class WallDef<M extends ModCacher> extends BlockBase<M> {
      */
     constructor(mod: M, name: string, id?: string) {
         super(mod, name, 'wall', id || v4());
+
+        this.blockState.set(this._blockState.bind(this));
+        this.model.set(
+            this._modelInventory.bind(this),
+            this._modelPost.bind(this),
+            this._modelSideTall.bind(this),
+            this._modelSide.bind(this)
+        );
+        this.item.model.set(this._modelItem.bind(this));
+        this.recipe.set(this._recipe.bind(this));
     }
 }

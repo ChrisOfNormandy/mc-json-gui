@@ -5,6 +5,7 @@ import { StrictMode } from 'react';
 import App from './app/App';
 import ModPage from './app/views/mods/ModPage';
 import Mods from './app/views/mods/Mods';
+import Home from './app/views/home/Home';
 
 const rootElement = document.getElementById('root');
 if (rootElement) {
@@ -15,6 +16,7 @@ if (rootElement) {
             >
                 <Routes>
                     <Route path='/' element={<App />}>
+                        <Route path='/' element={<Home />} />
                         <Route path='/mods' element={<Mods />}>
                             <Route path='/mods/:namespace' element={<ModPage />} />
                         </Route>

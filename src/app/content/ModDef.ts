@@ -1,5 +1,4 @@
-import { BlockType } from './blocks/IBlock';
-import { ItemType } from './items/IItem';
+import { BlockType, ItemType } from './types';
 import ModCacher from './ModCacher';
 import Tags from './Tags';
 
@@ -20,8 +19,7 @@ export default class ModDef extends ModCacher {
         this.loadBlockFromSchema({
             id: '',
             name: blockName,
-            type: blockType,
-            textures: ''
+            type: blockType
         });
 
         this.update();
@@ -42,8 +40,7 @@ export default class ModDef extends ModCacher {
         this.loadItemFromSchema({
             id: '',
             name: itemName,
-            type: itemType,
-            textures: ''
+            type: itemType
         });
 
         this.update();
@@ -52,13 +49,14 @@ export default class ModDef extends ModCacher {
     }
 
     blockStates() {
-        return Array.from(this.blockCache.values()).map((block) => block.blockState()).flat(1);
+        return Array.from(this.blockCache.values()).map((block) => block.blockState.file()).flat(1);
     }
 
     models() {
         return [
-            ...Array.from(this.blockCache.values()).map((block) => block.model()).flat(1),
-            ...Array.from(this.itemCache.values()).map((item) => item.model()).flat(1)
+            ...Array.from(this.blockCache.values()).map((block) => block.model.file()).flat(1),
+            ...Array.from(this.blockCache.values()).map((block) => block.item.model.file()).flat(1),
+            ...Array.from(this.itemCache.values()).map((item) => item.model.file()).flat(1)
         ];
     }
 
@@ -82,19 +80,19 @@ export default class ModDef extends ModCacher {
 
     recipes() {
         return [
-            ...Array.from(this.blockCache.values()).map((block) => block.recipe()).flat(1),
-            ...Array.from(this.itemCache.values()).map((item) => item.recipe()).flat(1)
+            ...Array.from(this.blockCache.values()).map((block) => block.recipe.file()).flat(1),
+            ...Array.from(this.itemCache.values()).map((item) => item.recipe.file()).flat(1)
         ];
     }
 
     lootTables() {
-        return Array.from(this.blockCache.values()).map((block) => block.lootTable()).flat(1);
+        return Array.from(this.blockCache.values()).map((block) => block.lootTable.file()).flat(1);
     }
 
     textures() {
         return [
-            ...Array.from(this.blockCache.values()).map((block) => block.textures()).flat(1),
-            ...Array.from(this.itemCache.values()).map((item) => item.textures()).flat(1)
+            ...Array.from(this.blockCache.values()).map((block) => block.textures.file()).flat(1),
+            ...Array.from(this.itemCache.values()).map((item) => item.textures.file()).flat(1)
         ];
     }
 }

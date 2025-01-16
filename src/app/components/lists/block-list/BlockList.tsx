@@ -1,18 +1,19 @@
 import './styles/block-list.scss';
-import { IBlock } from '../../../content/blocks/IBlock';
+import { Heading } from '@chrisofnormandy/confects/decorations';
 import { useEffect, useState } from 'react';
 import BlockListItem from './BlockListItem';
 import ContentList from '../ContentList';
 import ModCacher from '../../../content/ModCacher';
 import ModDef from '../../../content/ModDef';
-import { Heading } from '@chrisofnormandy/confects/decorations';
+import BlockBase from '../../../content/blocks/BlockBase';
+import ItemBase from '../../../content/items/ItemBase';
 
 export default function BlockList(
     {
         mod,
         blockList,
         downloadFiles
-    }: { mod: ModDef, downloadFiles: (files: File[]) => Promise<void>, blockList: IBlock<ModCacher>[] }
+    }: { mod: ModDef, downloadFiles: (files: File[]) => Promise<void>, blockList: BlockBase<ModCacher, ItemBase<ModCacher>>[] }
 ) {
     const [ready, isReady] = useState(true);
 

@@ -1,0 +1,17 @@
+@use '~layout' as layout;
+
+.importer {
+    @include layout.flex-center(true, true);
+
+    .importer-form {
+        @include layout.flex(true, true);
+
+        &:not(:first-child) {
+            margin-top: 10px;
+        }
+
+        .input {
+            text-align: center;
+        }
+    }
+}
