@@ -1,8 +1,8 @@
-import { v4 } from 'uuid';
-import ModCacher from '../ModCacher';
-import BlockBase from './BlockBase';
 import { BlockModel, BlockState, ItemModel, LootTable, ManagedContentData, Recipe } from '../types';
+import { v4 } from 'uuid';
+import BlockBase from './BlockBase';
 import ItemBase from '../items/ItemBase';
+import ModCacher from '../ModCacher';
 
 export default class DoorDef<M extends ModCacher> extends BlockBase<M, ItemBase<M>> {
 

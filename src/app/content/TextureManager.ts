@@ -1,15 +1,15 @@
 import { base64ToFile } from '../helpers/images';
-import ModCacher from './ModCacher';
 import { BlockModel, IContent, isItem, ItemModel, ModeledContent } from './types';
+import ModCacher from './ModCacher';
 
 export class TextureManager<M extends ModCacher, K extends (ItemModel | BlockModel), T extends ModeledContent<K> & IContent<M>> {
 
     private readonly parent: T;
 
+    private readonly defaultTexture: string;
+
     add(...textures: [string, string][]) {
         textures.forEach(([key, value]) => {
-            console.debug('Assign texture', key, 'to', this.parent.getName());
-
             this.parent.mod.addTexture(key, value);
         });
 
@@ -23,9 +23,7 @@ export class TextureManager<M extends ModCacher, K extends (ItemModel | BlockMod
     }
 
     file(): File[] {
-        return Array.from(this.keys()).map(([key, value]) => {
-            console.debug('Get texture', key, 'for', this.parent.getName(), 'as', value);
-
+        return Array.from(this.keys()).map(([, value]) => {
             const mapping = this.parent.mod.getTexture(value);
             if (mapping) {
                 const path = isItem(this.parent)
@@ -39,13 +37,13 @@ export class TextureManager<M extends ModCacher, K extends (ItemModel | BlockMod
         }).filter(Boolean) as File[];
     }
 
+    /**
+     *
+     * @returns A Map of texture names and the model texture key it's assigned to.
+     */
     entries(): Map<string, string> {
         const models = this.parent.model.json();
-        const defaultTexture = isItem(this.parent)
-            ? `${this.parent.mod.getName()}:item/${this.parent.name}`
-            : `${this.parent.mod.getName()}:block/${this.parent.name}`;
-
-        const mappedTextures = models.map((json) => Object.entries(json.textures || { default: defaultTexture })).flat(1) as [string, string][];
+        const mappedTextures = models.map((json) => Object.entries(json.textures || { default: this.defaultTexture })).flat(1) as [string, string][];
 
         const list = mappedTextures
             .filter(([, path]) => path.split(':')[0] === this.parent.mod.getName())
@@ -54,13 +52,13 @@ export class TextureManager<M extends ModCacher, K extends (ItemModel | BlockMod
         return new Map<string, string>(list);
     }
 
+    /**
+     *
+     * @returns A Map of model texture keys and the texture name being used.
+     */
     keys() {
         const models = this.parent.model.json();
-        const defaultTexture = isItem(this.parent)
-            ? `${this.parent.mod.getName()}:item/${this.parent.name}`
-            : `${this.parent.mod.getName()}:block/${this.parent.name}`;
-
-        const mappedTextures = models.map((json) => Object.entries(json.textures || { default: defaultTexture })).flat(1) as [string, string][];
+        const mappedTextures = models.map((json) => Object.entries(json.textures || { default: this.defaultTexture })).flat(1) as [string, string][];
 
         const list = mappedTextures
             .filter(([, path]) => path.split(':')[0] === this.parent.mod.getName())
@@ -69,7 +67,24 @@ export class TextureManager<M extends ModCacher, K extends (ItemModel | BlockMod
         return new Map<string, string>(list);
     }
 
-    constructor(parent: T) {
+    /**
+     * Model texture key : Texture name with namespace
+     */
+    private textureMapping = new Map<string, string>();
+
+    generateMappings() {
+        const models = this.parent.model.json();
+        const mappedTextures = models.map((json) => Object.entries(json.textures || { default: this.defaultTexture })).flat(1) as [string, string][];
+
+        const list = mappedTextures
+            .filter(([, path]) => path.split(':')[0] === this.parent.mod.getName())
+            .map(([key, path]) => [key, path]) as [string, string][];// REFACTOR
+
+        this.textureMapping = new Map(list);
+    }
+
+    constructor(parent: T, defaultTexture: string) {
         this.parent = parent;
+        this.defaultTexture = defaultTexture;
     }
 }

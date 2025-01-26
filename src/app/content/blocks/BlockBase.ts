@@ -19,7 +19,7 @@ export default class BlockBase<M extends ModCacher, I extends ItemBase<M>> imple
         return this.name;
     }
 
-    blockState = new ManagedContent<BlockState>(
+    readonly blockState = new ManagedContent<BlockState>(
         () => this.mod.paths.blockStates(`${this.name}.json`),
         [
             () => ({
@@ -34,7 +34,7 @@ export default class BlockBase<M extends ModCacher, I extends ItemBase<M>> imple
         ]
     );
 
-    lootTable = new ManagedContent<LootTable>(
+    readonly lootTable = new ManagedContent<LootTable>(
         () => this.mod.paths.blocksLootTables(`${this.name}.json`),
         [
             () => ({
@@ -56,7 +56,7 @@ export default class BlockBase<M extends ModCacher, I extends ItemBase<M>> imple
         ]
     );
 
-    model = new ManagedContent<BlockModel>(
+    readonly model = new ManagedContent<BlockModel>(
         () => this.mod.paths.blockModels(`${this.name}.json`),
         [
             () => ({
@@ -70,11 +70,11 @@ export default class BlockBase<M extends ModCacher, I extends ItemBase<M>> imple
         ]
     );
 
-    recipe = new ManagedContent<Recipe>(() => this.mod.paths.recipes(`${this.name}.json`));
-
-    textures = new TextureManager(this);
+    readonly recipe = new ManagedContent<Recipe>(() => this.mod.paths.recipes(`${this.name}.json`));
 
     readonly item: I;
+
+    readonly textures: TextureManager<M, BlockModel, IBlock<M, I>>;
 
     constructor(mod: M, name: string, type: BlockType, id?: string) {
         this.mod = mod;
@@ -83,5 +83,6 @@ export default class BlockBase<M extends ModCacher, I extends ItemBase<M>> imple
         this.id = id || v4();
 
         this.item = new ItemDef<M>(mod, name) as I;
+        this.textures = new TextureManager(this, mod.paths.blockTexture(name + '.png'));
     }
 }
